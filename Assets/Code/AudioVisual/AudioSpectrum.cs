@@ -1,25 +1,50 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 public class AudioSpectrum : MonoBehaviour
 {
     public static float spectrumValue { get; private set; }
     private float[] m_audioSpectrum;
+    AudioSource audioSource;
+
+    [DllImport("__Internal")]
+    private static extern bool StartSampling(string name, float duration, int bufferSize);
+
+    [DllImport("__Internal")]
+    private static extern bool CloseSampling(string name);
+
+    [DllImport("__Internal")]
+    private static extern bool GetSamples(string name, float[] freqData, int size);
 
     void Start()
     {
         m_audioSpectrum = new float[128];
+        audioSource = GetComponent<AudioSource>();
+#if UNITY_WEBGL && !UNITY_EDITOR
+        StartSampling(name, audioSource.clip.length, 128);
+#endif
     }
 
     // Update is called once per frame
     void Update()
     {
-        AudioListener.GetSpectrumData(m_audioSpectrum, 0, FFTWindow.Hamming);
-
-        if(m_audioSpectrum != null && m_audioSpectrum.Length > 0)
+        if(audioSource.isPlaying)
         {
-            spectrumValue = m_audioSpectrum[0] * 100;
+#if UNITY_WEBGL && !UNITY_EDITOR
+        StartSampling(name, audioSource.clip.length, 128);
+        GetSamples(name, m_audioSpectrum, m_audioSpectrum.Length);
+#endif
+
+#if UNITY_EDITOR || !UNITY_WEBGL
+            AudioListener.GetSpectrumData(m_audioSpectrum, 0, FFTWindow.Hamming);
+#endif
+
+            if (m_audioSpectrum != null && m_audioSpectrum.Length > 0)
+            {
+                spectrumValue = m_audioSpectrum[0] * 100;
+            }
         }
     }
 

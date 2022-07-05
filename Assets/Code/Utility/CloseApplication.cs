@@ -9,6 +9,12 @@ public class CloseApplication : MonoBehaviour
         #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
         #endif
+
+        #if UNITY_WEBGL
+        return;
+        #endif
+
+
         Application.Quit();
     }
 }
